@@ -7,7 +7,7 @@ def ex2a():
     G, x = generate_experiment()
     lambda_x = 80
     Gx = G @ x
-    result = (lambda_x / 2) * pow((np.linalg.norm(Gx, 2), 2))
+    result = (lambda_x / 2) * pow((np.linalg.norm(Gx, 2)), 2)
     print("result: \n %s" % result)
 
 
