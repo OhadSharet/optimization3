@@ -21,7 +21,7 @@ def generate_experiment():
     f[(2 * one): (3 * one)] = 0.7 - 0.3 * x[(2 * one): 3 * one]
     f[(3 * one): (4 * one)] = 0.3
     f[(4 * one): (5 * one)] = 0.5 - 0.1 * x[(4 * one): (5 * one)]
-    G = spdiags([[-np.ones(n - 1)], [np.ones(n)]], [-1, 0], n, n)
+    G = spdiags([-np.ones(n), np.ones(n)], np.array([0, 1]), n - 1, n).toarray()
     etta = 0.1 * np.random.randn(np.size(x))
     y = f + etta
     plt.figure()
