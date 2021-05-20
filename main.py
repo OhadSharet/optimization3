@@ -9,7 +9,7 @@ def ex2a():
 
     # Since in our case: A = I, we get that:
     # x = (I + (lambda_x/2) * GtG)^-1 * y
-    # mark: z = (I + (lambda_x/2) * GtG)^-1 , so: x = z * y
+    # mark: z = (I + (lambda_x/2) * GtG)^-1 , so: x = z @ y
     I = np.eye(np.size(x))
     GtG = G.transpose() @ G
     z = np.invert(np.array(I + ((lambda_x / 2) * GtG), dtype=int))
@@ -17,6 +17,19 @@ def ex2a():
     print("x: \n %s" % x_result)
     plt.plot(x, x_result)
     plt.show()
+
+
+def ex2b():
+    G, x, y = generate_experiment()
+    IRLS(G, y, lambda_x=1, W=np.eye(np.size(x)), epsilon=0.001, number_of_iterations=10)
+
+
+def IRLS(G, y, lambda_x, W, epsilon, number_of_iterations):
+    I = W
+    GtWtWG = G.transpose() @ W.transpose() @ W @ G
+    for i in range(number_of_iterations):
+        z = np.invert(np.array(I + ((lambda_x / 2) * GtWtWG), dtype=int))
+        x_result = z @ y
 
 
 def generate_experiment():
