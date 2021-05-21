@@ -12,7 +12,7 @@ def ex2a():
     # mark: z = (I + (lambda_x/2) * GtG)^-1 , so: x = z @ y
     I = np.eye(np.size(x))
     GtG = G.transpose() @ G
-    z = np.invert(np.array(I + ((lambda_x / 2) * GtG), dtype=int))
+    z = np.linalg.inv(np.array(I + ((lambda_x / 2) * GtG), dtype=int))
     x_result = z @ y
     print("x: \n %s" % x_result)
     plt.plot(x, x_result)
