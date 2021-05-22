@@ -15,21 +15,34 @@ def ex2a():
     z = np.linalg.inv(np.array(I + ((lambda_x / 2) * GtG), dtype=int))
     x_result = z @ y
     print("x: \n %s" % x_result)
-    plt.plot(x, x_result)
-    plt.show()
+    plt.plot(x, x_result,label='L2')
+    #plt.show()
 
 
 def ex2b():
     G, x, y = generate_experiment()
-    IRLS(G, y, lambda_x=1, W=np.eye(np.size(x)), epsilon=0.001, number_of_iterations=10)
-
+    x_result = IRLS(G, y, lambda_x=1, W=np.eye(np.size(x)-1), epsilon=0.001, number_of_iterations=10)
+    print("x: \n %s" % x_result)
+    plt.plot(x, x_result,label='IRLS')
+    plt.legend()
+    plt.show()
 
 def IRLS(G, y, lambda_x, W, epsilon, number_of_iterations):
-    I = W
-    GtWtWG = G.transpose() @ W.transpose() @ W @ G
+    I = np.eye(np.size(y))
+    GtWG = G.transpose()  @ W @ G
     for i in range(number_of_iterations):
-        z = np.invert(np.array(I + ((lambda_x / 2) * GtWtWG), dtype=int))
-        x_result = z @ y
+        GtWG = G.transpose() @ W @ G
+        z = np.linalg.inv(np.array(I + ((lambda_x) * GtWG), dtype=int))
+        curr_x = z @ y
+        W = calc_w(curr_x, G, epsilon)
+    return curr_x
+
+
+def calc_w(perv_x, G, epsilon):
+    w_vector = G @ perv_x
+    w_vector = np.abs(w_vector)+epsilon
+    w_mat = np.diag(w_vector)
+    return np.linalg.inv(w_mat)
 
 
 def generate_experiment():
@@ -45,10 +58,10 @@ def generate_experiment():
     G = spdiags([-np.ones(n), np.ones(n)], np.array([0, 1]), n - 1, n).toarray()
     etta = 0.1 * np.random.randn(np.size(x))
     y = f + etta
-    plt.figure()
-    plt.plot(x, y)
-    plt.plot(x, f)
-    plt.show()
+    # plt.figure()
+    # plt.plot(x, y)
+    # plt.plot(x, f)
+    # plt.show()
     return G, x, y
 
 
@@ -58,3 +71,4 @@ def ex4a():
 
 if __name__ == '__main__':
     ex2a()
+    ex2b()
