@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from scipy.sparse import spdiags
 import matplotlib.pyplot as plt
@@ -52,9 +54,50 @@ def generate_experiment():
     return G, x, y
 
 
-def ex4a():
-    return 0
+def ex4a(X, labels, w):
+    Fw, Gradient_Fw, Hessian_Fw = Logistic_Regression(X, labels, w)
+
+
+def Logistic_Regression(X, labels, w):
+    number_of_labels = len(labels)
+    n = X.shape[0]
+    m = X.shape[1]
+    c1 = []
+    c2 = []
+    for i in range(number_of_labels):
+        if labels[i] == 0:
+            c1.append(1)
+            c2.append(0)
+        else:
+            c1.append(0)
+            c2.append(1)
+    c1 = np.array([c1]).transpose()
+    c2 = np.array([c2]).transpose()
+
+    Fw = 0
+    for i in range(m):
+        xtw = np.transpose(X[:, i:i]) @ w
+        Fw += c1.transpose() @ np.log(sigmoid(xtw)) + c2.transpose() @ np.log(1 - sigmoid(xtw))
+    Fw = -1/m * Fw
+
+    Gradient_Fw = np.zeros(1, m)
+    for i in range(m):
+        xtw = np.transpose(X[:, i:i]) @ w
+        Gradient_Fw[0][i] = sigmoid(xtw)
+    Gradient_Fw = 1/m * (X @ (Gradient_Fw - c1))
+
+    Hessian_Fw = np.zeros(m, m)
+    for i in range(m):
+        xtw = np.transpose(X[:, i:i]) @ w
+        Hessian_Fw[i][i] = sigmoid(xtw) * (1 - sigmoid(xtw))
+    Hessian_Fw = 1/m * (X @ Gradient_Fw @ X.transpose())
+
+    return Fw, Gradient_Fw, Hessian_Fw
+
+
+def sigmoid(xtw):
+    return 1 / (math.exp(-xtw))
 
 
 if __name__ == '__main__':
-    ex2a()
+    Logistic_Regression(np.eye(np.size(100)), [0, 1, 1, 0, 0], np.size(100))
