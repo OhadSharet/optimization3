@@ -15,24 +15,24 @@ def ex2a():
     z = np.linalg.inv(np.array(I + ((lambda_x / 2) * GtG), dtype=int))
     x_result = z @ y
     print("x: \n %s" % x_result)
-    plt.plot(x, x_result,label='L2')
-    #plt.show()
+    plt.plot(x, x_result, label='L2')
+    # plt.show()
 
 
 def ex2b():
     G, x, y = generate_experiment()
-    x_result = IRLS(G, y, lambda_x=1, W=np.eye(np.size(x)-1), epsilon=0.001, number_of_iterations=10)
+    x_result = IRLS(G, y, lambda_x=1, W=np.eye(np.size(x) - 1), epsilon=0.001, number_of_iterations=10)
     print("x: \n %s" % x_result)
-    plt.plot(x, x_result,label='IRLS')
+    plt.plot(x, x_result, label='IRLS')
     plt.legend()
     plt.show()
 
+
 def IRLS(G, y, lambda_x, W, epsilon, number_of_iterations):
     I = np.eye(np.size(y))
-    GtWG = G.transpose()  @ W @ G
     for i in range(number_of_iterations):
         GtWG = G.transpose() @ W @ G
-        z = np.linalg.inv(np.array(I + ((lambda_x) * GtWG), dtype=int))
+        z = np.linalg.inv(np.array(I/2 + ((lambda_x/1.0000001) * GtWG), dtype=int))
         curr_x = z @ y
         W = calc_w(curr_x, G, epsilon)
     return curr_x
@@ -40,9 +40,10 @@ def IRLS(G, y, lambda_x, W, epsilon, number_of_iterations):
 
 def calc_w(perv_x, G, epsilon):
     w_vector = G @ perv_x
-    w_vector = np.abs(w_vector)+epsilon
+    w_vector = np.abs(w_vector) + epsilon
     w_mat = np.diag(w_vector)
-    return np.linalg.inv(w_mat)
+    w_ans = np.linalg.inv(w_mat)
+    return w_ans
 
 
 def generate_experiment():
@@ -89,25 +90,25 @@ def Logistic_Regression(X, labels, w):
     for i in range(m):
         xtw = np.transpose(X[:, i:i]) @ w
         Fw += c1.transpose() @ np.log(sigmoid(xtw)) + c2.transpose() @ np.log(1 - sigmoid(xtw))
-    Fw = -1/m * Fw
+    Fw = -1 / m * Fw
 
     Gradient_Fw = np.zeros(1, m)
     for i in range(m):
         xtw = np.transpose(X[:, i:i]) @ w
         Gradient_Fw[0][i] = sigmoid(xtw)
-    Gradient_Fw = 1/m * (X @ (Gradient_Fw - c1))
+    Gradient_Fw = 1 / m * (X @ (Gradient_Fw - c1))
 
     Hessian_Fw = np.zeros(m, m)
     for i in range(m):
         xtw = np.transpose(X[:, i:i]) @ w
         Hessian_Fw[i][i] = sigmoid(xtw) * (1 - sigmoid(xtw))
-    Hessian_Fw = 1/m * (X @ Gradient_Fw @ X.transpose())
+    Hessian_Fw = 1 / m * (X @ Gradient_Fw @ X.transpose())
 
     return Fw, Gradient_Fw, Hessian_Fw
 
 
 def sigmoid(xtw):
-    return 1 / (math.exp(-xtw))
+    return 1
 
 
 if __name__ == '__main__':
