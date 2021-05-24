@@ -1,35 +1,52 @@
 import numpy as np
 from scipy.sparse import spdiags
 import matplotlib.pyplot as plt
+import math
 
 
-def ex2a():
+def ex2():
     G, x, y = generate_experiment()
+    x1 = ex2a(G, x, y)
+    x2 = ex2b(G, x, y)
+    plt.plot(x, x1, label='L2')
+    plt.plot(x, x2, label='IRLS')
+    plt.legend()
+    plt.title("Approximated signal f")
+    plt.show()
+
+
+def ex2a(G, x, y):
     lambda_x = 80
 
-    # Since in our case: A = I, we get that:
-    # x = (I + (lambda_x/2) * GtG)^-1 * y
-    # mark: z = (I + (lambda_x/2) * GtG)^-1 , so: x = z @ y
+    # Since in our case: A = I, we get that for the original equation:
+    # arg min(x) = (x - y)t @ (x - y) + (lambda_x/2) * (G @ x)t @ (G @ x)
+    # The minimization of x is obtained by:
+    # x = (I + (lambda_x/2) * GtG)^-1 @ y
+    # By marking: z = (I + (lambda_x/2) * GtG)^-1
+    # We have: x = z @ y
+
     I = np.eye(np.size(x))
     GtG = G.transpose() @ G
     z = np.linalg.inv(np.array(I + ((lambda_x / 2) * GtG), dtype=int))
     x_result = z @ y
-    print("x: \n %s" % x_result)
-    plt.plot(x, x_result, label='L2')
-    # plt.show()
+    return x_result
 
 
-def ex2b():
-    G, x, y = generate_experiment()
+def ex2b(G, x, y):
     x_result = IRLS(G, y, lambda_x=1, W=np.eye(np.size(x) - 1), epsilon=0.001, number_of_iterations=10)
-    print("x: \n %s" % x_result)
-    plt.plot(x, x_result, label='IRLS')
-    plt.legend()
-    plt.show()
+    return x_result
 
 
 def IRLS(G, y, lambda_x, W, epsilon, number_of_iterations):
     I = np.eye(np.size(y))
+    curr_x = 0
+
+    # The minimization of x is obtained by:
+    # x = (1/2 * I + (lambda_x/1.0000001) * GtWG)^-1 @ y
+    # By marking: z = (1/2 * I + (lambda_x/1.0000001) * GtWG)^-1
+    # We have: x = z @ y
+    # Where: W = 1/(|Gx| + epsilon)
+
     for i in range(number_of_iterations):
         GtWG = G.transpose() @ W @ G
         z = np.linalg.inv(np.array(I/2 + ((lambda_x/1.0000001) * GtWG), dtype=int))
@@ -59,10 +76,11 @@ def generate_experiment():
     G = spdiags([-np.ones(n), np.ones(n)], np.array([0, 1]), n - 1, n).toarray()
     etta = 0.1 * np.random.randn(np.size(x))
     y = f + etta
-    # plt.figure()
-    # plt.plot(x, y)
-    # plt.plot(x, f)
-    # plt.show()
+    plt.figure()
+    plt.plot(x, y)
+    plt.plot(x, f)
+    plt.title("Original signal f")
+    plt.show()
     return G, x, y
 
 
@@ -108,9 +126,8 @@ def Logistic_Regression(X, labels, w):
 
 
 def sigmoid(xtw):
-    return 1
+    return 1 / (math.exp(-xtw))
 
 
 if __name__ == '__main__':
-    ex2a()
-    ex2b()
+    ex2()
