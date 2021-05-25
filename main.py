@@ -42,15 +42,15 @@ def IRLS(G, y, lambda_x, W, epsilon, number_of_iterations):
     curr_x = 0
 
     # The minimization of x is obtained by:
-    # x = (1/2 * I + (lambda_x/1.0000001) * GtWG)^-1 @ y
-    # By marking: z = (1/2 * I + (lambda_x/1.0000001) * GtWG)^-1
-    # We have: x = z @ y
-    # Where: W = 1/(|Gx| + epsilon)
+    # x = (I + (lambda_x) * GtWG)^-1 @ y
+    # By marking: z = I + (lambda_x) * GtWG
+    # We have: x = z^-1 @ y
+    # Where: W = 1/(|G @ curr_x| + epsilon), for curr_x in each iteration
 
     for i in range(number_of_iterations):
         GtWG = G.transpose() @ W @ G
-        z = np.linalg.inv(np.array(I/2 + ((lambda_x/1.0000001) * GtWG), dtype=int))
-        curr_x = z @ y
+        z = I + (lambda_x * GtWG)
+        curr_x = np.linalg.inv(z) @ y
         W = calc_w(curr_x, G, epsilon)
     return curr_x
 
