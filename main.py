@@ -85,7 +85,7 @@ def generate_experiment():
 
 
 def ex4a(X, labels):
-    return Logistic_Regression(X, labels, w=np.eye(X.shape[0], 1))
+    return Logistic_Regression(X, labels, w=np.ones(X.shape[1]))
 
 
 def Logistic_Regression(X, labels, w):
@@ -102,45 +102,57 @@ def Logistic_Regression(X, labels, w):
             c2.append(1)
     c1 = np.array([c1]).transpose()
     c2 = np.array([c2]).transpose()
-    Xtw = X.transpose() @ w
-    sigmoidXtW = sigmoid(Xtw)
-    one_minus_sigmoidXtW = 1 - sigmoidXtW
 
-    Fw = c1.transpose() @ np.log(sigmoidXtW) + c2.transpose() @ np.log(one_minus_sigmoidXtW)
-    Fw = (-1 / m) * Fw
+    # Xtw = X.transpose() @ np.array([w]).transpose()
+    Xtw = xtw(X, w)
+    sigmoidXtW = sigmoid(Xtw)
+
+    Objective_Fw = c1.transpose() @ np.log(sigmoidXtW) + c2.transpose() @ np.log(1 - sigmoidXtW)
+    Objective_Fw = (-1 / m) * Objective_Fw
 
     Gradient_Fw = X @ (sigmoidXtW - c1)
     Gradient_Fw = (1 / m) * Gradient_Fw
 
-    D = np.diag(sigmoidXtW)
+    D = np.asarray(sigmoidXtW.transpose())[0]
+    D = np.diag(D)
     Hessian_Fw = X @ D @ X.transpose()
     Hessian_Fw = (1 / m) * Hessian_Fw
 
     # Fw = 0
     # for i in range(m):
-        # xtw = np.transpose(X[:, i:i]) @ w
-        # Fw += c1.transpose() @ np.log(sigmoid(xtw)) + c2.transpose() @ np.log(1 - sigmoid(xtw))
+    # xtw = np.transpose(X[:, i:i]) @ w
+    # Fw += c1.transpose() @ np.log(sigmoid(xtw)) + c2.transpose() @ np.log(1 - sigmoid(xtw))
     # Fw = -1 / m * Fw
 
     # Gradient_Fw = np.zeros(1, m)
     # for i in range(m):
-        # xtw = np.transpose(X[:, i:i]) @ w
-        # Gradient_Fw[0][i] = sigmoid(xtw)
+    # xtw = np.transpose(X[:, i:i]) @ w
+    # Gradient_Fw[0][i] = sigmoid(xtw)
     # Gradient_Fw = 1 / m * (X @ (Gradient_Fw - c1))
 
     # Hessian_Fw = np.zeros(m, m)
     # for i in range(m):
-        # xtw = np.transpose(X[:, i:i]) @ w
-        # Hessian_Fw[i][i] = sigmoid(xtw) * (1 - sigmoid(xtw))
+    # xtw = np.transpose(X[:, i:i]) @ w
+    # Hessian_Fw[i][i] = sigmoid(xtw) * (1 - sigmoid(xtw))
     # Hessian_Fw = 1 / m * (X @ Gradient_Fw @ X.transpose())
+    print(Objective_Fw)
+    print(Gradient_Fw)
+    print(Hessian_Fw)
+    return Objective_Fw, Gradient_Fw, Hessian_Fw
 
-    return Fw, Gradient_Fw, Hessian_Fw
+
+def xtw(X, w):
+    m = X.shape[1]
+    xtw_result = np.zeros([m, 1])
+    for i in range(m):
+        xtw_result = xtw_result + X[:, i:i+1] * w[i]
+    return xtw_result
 
 
 def sigmoid(Xtw):
     sigmoid_result = np.exp(-Xtw)
     sigmoid_result = 1 + sigmoid_result
-    return np.linalg.inv(sigmoid_result)
+    return 1 / sigmoid_result
 
 
 def ex4b(w):
@@ -148,4 +160,9 @@ def ex4b(w):
 
 
 if __name__ == '__main__':
-    ex2()
+    x = np.array([[2, 1, 1],
+                  [2, 1, 1],
+                  [2, 1, 1]])
+    y = [1, 0, 1]
+    w = [1, 1, 1]
+    ex4a(x, y)
