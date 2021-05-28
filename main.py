@@ -85,7 +85,7 @@ def generate_experiment():
 
 
 def ex4a(X, y):
-    return Logistic_Regression(X, y, w=np.zeros(X.shape[1]))
+    return Logistic_Regression(X, y, w=np.zeros([1, X.shape[1]]))
 
 
 def Logistic_Regression(X, y, w):
@@ -139,7 +139,7 @@ def xtw(X, w):
     m = X.shape[1]
     xtw_result = np.zeros([m, 1])
     for i in range(m):
-        xtw_result = xtw_result + X[:, i:i+1] * w[i]
+        xtw_result = xtw_result + (np.transpose(X[i:i+1, :]) @ w[:, i:i+1])
     return xtw_result
 
 
@@ -167,35 +167,58 @@ def Hessian(X, probability):
     return (1 / m) * (X @ D @ X.transpose())
 
 
-def ex4b(X, y, w, epsilon):
-    d = np.random.rand(1, X.shape[1])
-    Xtw = xtw(X, w)
-    probability = sigmoid(Xtw)
-    X_ed = (X + (epsilon * d))
-    X_edtw = xtw(X_ed, w)
-    probability_new = sigmoid(X_edtw)
-    Fx_ed = Objective(X_ed, y, 1 - y, probability_new)
-    Fx = Objective(X, y, 1 - y, probability)
-    Fx_Gradient = Gradient(X, y, probability)
-    Fx_Hessian = Hessian(X, probability)
-    print("4b")
-    print(d)
-    print(Fx_ed - Fx)
-    print(np.abs(Fx_ed - Fx - (Fx_Gradient.transpose() @ (epsilon * d.transpose()))))
-    print(np.linalg.norm(Fx_ed - Fx - ((epsilon * d) @ Fx_Hessian @ (epsilon * d.transpose()))))
+def ex4b(X, y, w):
+    list_of_epsilons = np.arange(0.0, 0.6, 0.1)
+    d = np.random.rand(X.shape[0], 1)
+    #gradient_test_results = []
+    #jacobi_test_results = []
+    for i in list_of_epsilons:
+        epsilon = i
+        Xtw = xtw(X, w)
+        probability = sigmoid(Xtw)
+        X_ed = (X + (epsilon * d))
+        X_edtw = xtw(X_ed, w)
+        probability_new = sigmoid(X_edtw)
+        Fx_ed = Objective(X_ed, y, 1 - y, probability_new)
+        Fx = Objective(X, y, 1 - y, probability)
+        Fx_Gradient = Gradient(X, y, probability)
+        Fx_Gradient_ed = Gradient(X_ed, y, probability_new)
+        Fx_Hessian = Hessian(X, probability)
+        print("4b")
+        #print(d)
+        print(Fx_ed - Fx)
+        print(np.abs(Fx_ed - Fx - ((epsilon * d.transpose()) @ Fx_Gradient)))
+        #print(np.abs(Fx_ed - Fx - (epsilon * epsilon * (d.transpose() @ Fx_Hessian @ d))))
+        print(np.abs(Fx_Gradient_ed - Fx_Gradient))
+        print(np.abs(Fx_Gradient_ed - Fx_Gradient) - (epsilon * (Fx_Hessian @ d)))
+
+        #gradient_test_results.append(np.abs(Fx_ed - Fx - ((epsilon * d.transpose()) @ Fx_Gradient))[0][0])
+        #jacobi_test_results.append(np.abs(Fx_ed - Fx - (epsilon * epsilon * (d.transpose() @ Fx_Hessian @ d)))[0][0])
+
+    #print(gradient_test_results)
+    #print(jacobi_test_results)
+    #fig, ax1 = plt.subplots()
+    #ax1.semilogy(list_of_epsilons, gradient_test_results)
+    #plt.show()
+    #fig, ax2 = plt.subplots()
+    #ax2.semilogy(list_of_epsilons, jacobi_test_results)
+    #plt.show()
+
     return True
 
 
 if __name__ == '__main__':
-    x = np.array([[2, 1, 1],
-                  [2, 1, 2],
-                  [1, 1, 2]])
-    y = [1, 0, 1]
-    w = [0.5, 0.5, 0.5]
-    ex4a(x, y)
+    x = np.array([[2, 1],
+                  [2, 1],
+                  [1, 1]])
+
+    w = np.array([[0.5, 0.5]])
+    y = [1, 0]
+    #ex4a(x, y)
 
     #x = np.array([[1],
     #              [2],
     #              [1]])
-    y = np.array([[1, 0, 1]]).transpose()
-    ex4b(x, y, w, 0.1)
+    y = np.array([[1, 0]]).transpose()
+    d = np.random.rand(x.shape[0], 1)
+    ex4b(x, y, w)
