@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.sparse import spdiags
 import matplotlib.pyplot as plt
-import math
 
 
 def ex2():
@@ -18,12 +17,14 @@ def ex2():
 def ex2a(G, x, y):
     lambda_x = 80
 
-    # Since in our case: A = I, we get that for the original equation:
-    # arg min(x) = (x - y)t @ (x - y) + (lambda_x/2) * (G @ x)t @ (G @ x)
-    # The minimization of x is obtained by:
-    # x = (I + (lambda_x/2) * GtG)^-1 @ y
-    # By marking: z = (I + (lambda_x/2) * GtG)^-1
-    # We have: x = z @ y
+    '''
+    Since in our case: A = I, we get that for the original equation:
+    arg min(x) = (x - y)t @ (x - y) + (lambda_x/2) * (G @ x)t @ (G @ x)
+    The minimization of x is obtained by:
+    x = (I + (lambda_x/2) * GtG)^-1 @ y
+    By marking: z = (I + (lambda_x/2) * GtG)^-1
+    We have: x = z @ y
+    '''
 
     I = np.eye(np.size(x))
     GtG = G.transpose() @ G
@@ -41,11 +42,13 @@ def IRLS(G, y, lambda_x, W, epsilon, number_of_iterations):
     I = np.eye(np.size(y))
     curr_x = 0
 
-    # The minimization of x is obtained by:
-    # x = (I + (lambda_x) * GtWG)^-1 @ y
-    # By marking: z = I + (lambda_x) * GtWG
-    # We have: x = z^-1 @ y
-    # Where: W = 1/(|G @ curr_x| + epsilon), for curr_x in each iteration
+    '''
+    The minimization of x is obtained by:
+    x = (I + (lambda_x) * GtWG)^-1 @ y
+    By marking: z = I + (lambda_x) * GtWG
+    We have: x = z^-1 @ y
+    Where: W = 1/(|G @ curr_x| + epsilon), for curr_x in each iteration
+    '''
 
     for i in range(number_of_iterations):
         GtWG = G.transpose() @ W @ G
