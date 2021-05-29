@@ -87,88 +87,67 @@ def generate_experiment():
     return G, x, y
 
 
-def ex4a(X, y):
-    #return Logistic_Regression(X, y, w=np.zeros([1, X.shape[1]]))
-    return Logistic_Regression(X, y, w=np.zeros([X.shape[0], 1]))
+def ex4a(x, y):
+    return Logistic_Regression(x, y, w=np.zeros([x.shape[0], 1]))
 
 
-def Logistic_Regression(X, y, w):
-        #number_of_labels = len(y)
-    #c1 = []
-    #c2 = []
-    #for i in range(number_of_labels):
-    #    if y[i] == 0:
-    #        c1.append(0)
-    #        c2.append(1)
-    #    else:
-    #        c1.append(1)
-    #        c2.append(0)
-    #c1 = np.array([c1]).transpose()
-    #c2 = np.array([c2]).transpose()
-
-    # Xtw = X.transpose() @ np.array([w]).transpose()
+def Logistic_Regression(x, y, w):
     c1 = y
     c2 = 1 - y
-    Xtw = net_input(X, w)
-    probability = sigmoid(Xtw)
+    xtw = net_input(x, w)
+    probability = sigmoid(xtw)
 
-    Objective_Fw = Objective(X, c1, c2, probability)
-    Gradient_Fw = Gradient(X, c1, probability)
-    Hessian_Fw = Hessian(X, probability)
+    Objective_Fw = Objective(x, c1, c2, probability)
+    Gradient_Fw = Gradient(x, c1, probability)
+    Hessian_Fw = Hessian(x, probability)
 
-    #print("4a")
-    #print(Objective_Fw)
-    #print(Gradient_Fw)
-    #print(Hessian_Fw)
+    # print("4a")
+    # print(Objective_Fw)
+    # print(Gradient_Fw)
+    # print(Hessian_Fw)
     return Objective_Fw, Gradient_Fw, Hessian_Fw
 
 
-def net_input(X, w):
-    return np.dot(X.transpose(), w)
-    #print("First")
-    #print(w)
-    #print(X.transpose())
-    #print(np.dot(X.transpose(), w))
-    #m = X.shape[1]
-    #xtw_result = np.zeros([m, 1])
-    #for i in range(m):
-    #    xtw_result = xtw_result + (np.transpose(X[i:i+1, :]) @ w[:, i:i+1])
-    #print("Second")
-    #print(xtw_result)
-    #return xtw_result
+def net_input(x, w):
+    return np.dot(x.transpose(), w)
 
 
-def sigmoid(Xtw):
-    return 1 / (1 + np.exp(-Xtw))
+def sigmoid(xtw):
+    return 1 / (1 + np.exp(-xtw))
 
 
-def Objective(X, c1, c2, probability):
-    m = X.shape[1]
+def Objective(x, c1, c2, probability):
+    m = x.shape[1]
     # Objective_Fw = c1.transpose() @ np.log(probability) + c2.transpose() @ np.log(1 - probability)
-    return (-1 / m) * (c1.transpose() @ np.log(probability) + c2.transpose() @ np.log(1 - probability))
+    return (-1 / m) * np.sum(c1.transpose() @ np.log(probability) + c2.transpose() @ np.log(1 - probability))
 
 
-def Gradient(X, c1, probability):
-    m = X.shape[1]
+def Gradient(x, c1, probability):
+    m = x.shape[1]
     # Gradient_Fw = X @ (probability - c1)
-    return (1 / m) * (X @ (probability - c1))
+    return (1 / m) * (x @ (probability - c1))
 
 
-def Hessian(X, probability):
-    m = X.shape[1]
+def Hessian(x, probability):
+    m = x.shape[1]
     D = np.asarray(probability.transpose())[0]
     D = np.diag(D)
     # Hessian_Fw = X @ D @ X.transpose()
-    return (1 / m) * (X @ D @ X.transpose())
+    return (1 / m) * (x @ D @ x.transpose())
 
 
 def ex4b():
-    verification_test()
-    #list_of_epsilons = np.arange(0.0, 0.6, 0.1)
-    #d = np.random.rand(x.shape[0], 1)
-    #gradient_test_results = []
-    #jacobi_test_results = []
-    #for i in list_of_epsilons:
+    n = 20
+    x = np.random.rand(n, 1)
+    w = np.random.rand(n, 1)
+    y = np.array([[0]])
+    verification_test(x, y, w)
+
+    # list_of_epsilons = np.arange(0.0, 0.6, 0.1)
+    # d = np.random.rand(x.shape[0], 1)
+    # gradient_test_results = []
+    # jacobi_test_results = []
+    # for i in list_of_epsilons:
     #    epsilon = i
     #    Xtw = net_input(X, w)
     #    probability = sigmoid(Xtw)
@@ -187,66 +166,114 @@ def ex4b():
     #    print(np.linalg.norm(Fx_Gradient_ed - Fx_Gradient))
     #    print(np.linalg.norm(Fx_Gradient_ed - Fx_Gradient - (epsilon * (Fx_Hessian @ d))))
 
-        # gradient_test_results.append(np.abs(Fx_ed - Fx - ((epsilon * d.transpose()) @ Fx_Gradient))[0][0])
-        # jacobi_test_results.append(np.abs(Fx_ed - Fx - (epsilon * epsilon * (d.transpose() @ Fx_Hessian @ d)))[0][0])
+    # gradient_test_results.append(np.abs(Fx_ed - Fx - ((epsilon * d.transpose()) @ Fx_Gradient))[0][0])
+    # jacobi_test_results.append(np.abs(Fx_ed - Fx - (epsilon * epsilon * (d.transpose() @ Fx_Hessian @ d)))[0][0])
 
 
-def verification_test():
-    n = 20
-    x = np.random.rand(n, 1)
-    d = np.random.rand(n, 1)
+def verification_test(x, y, w):
+    d = np.random.rand(x.shape[0], 1)
     epsilon = 0.1
-    F0 = function(x)
-    G0 = grand(x)
-    iterations = np.arange(0, 8, 1)
-    y0 = np.zeros(8)
-    y1 = np.zeros(8)
-    y2 = np.zeros(8)
-    y3 = np.zeros(8)
-    for k in range(8):
+    F0 = function(x, y, w)
+    G0 = grand(x, y, w)
+    iterations = np.arange(0, 10, 1)
+    y0 = np.zeros(10)
+    y1 = np.zeros(10)
+    y2 = np.zeros(10)
+    y3 = np.zeros(10)
+    for k in range(10):
         epsilon_k = epsilon * pow(0.5, k)
-        x_ed = x + (epsilon_k * d)
-        Fk = function(x_ed)
+        ed = epsilon_k * d
+        x_ed = x + ed
+        Fk = function(x_ed, y, w)
+        Gk = grand(x_ed, y, w)
         F1 = F0 + (epsilon_k * np.dot(d.transpose(), G0))
-        Gk = grand(x_ed)
-        H0 = JacMV(x, epsilon_k * d)
+        G1 = G0 + JacMV(x, w, epsilon_k * d)
         y0[k] = np.abs(Fk - F0)
         y1[k] = np.abs(Fk - F1)
         y2[k] = np.linalg.norm(Gk - G0)
-        y3[k] = np.linalg.norm(Gk - G0 - H0)
-
+        y3[k] = np.linalg.norm(Gk - G1)
         print("Err 1 " + str(y0[k]) + " Err 2 " + str(y1[k]) + " Err 3 " + str(y2[k]) + " Err 4 " + str(y3[k]))
 
     plt.figure()
-    plt.plot(iterations, y0)
-    plt.plot(iterations, y1)
-    plt.plot(iterations, y2)
-    plt.plot(iterations, y3)
+    plt.plot(iterations, y0, label="|f(x+εd)-f(x)|")
+    plt.plot(iterations, y1, label="|f(x+εd)-f(x)-εdt*grand(x)|")
+    plt.plot(iterations, y2, label="||grand(x+εd)-grand(x)||")
+    plt.plot(iterations, y3, label="||grand(x+εd)-grand(x)-JacMV(x,εd)||")
+    plt.legend()
+    plt.title("Gradient and Jacobian Tests")
     plt.show()
 
 
-def function(x):
-    Xtw = net_input(x, w=np.zeros([x.shape[0], 1]))
-    probability = sigmoid(Xtw)
-    y = (probability >= 0.5).astype(int)
-    Objective_Fx, Gradient_Fx, Hessian_Fx = ex4a(x, y)
-    return Objective_Fx
+def function(x, y, w):
+    xtw = net_input(x, w)
+    probability = sigmoid(xtw)
+    return Objective(x, y, 1-y, probability)
 
 
-def grand(x):
-    Xtw = net_input(x, w=np.zeros([x.shape[0], 1]))
-    probability = sigmoid(Xtw)
-    y = (probability >= 0.5).astype(int)
-    Objective_Fx, Gradient_Fx, Hessian_Fx = ex4a(x, y)
-    return Gradient_Fx
+def grand(x, y, w):
+    xtw = net_input(x, w)
+    probability = sigmoid(xtw)
+    return Gradient(x, y, probability)
 
 
-def JacMV(x, v):
-    Xtw = net_input(x, w=np.zeros([x.shape[0], 1]))
-    probability = sigmoid(Xtw)
-    y = (probability >= 0.5).astype(int)
-    Objective_Fx, Gradient_Fx, Hessian_Fx = ex4a(x, y)
-    return Hessian_Fx @ v
+def JacMV(x, w, v):
+    xtw = net_input(x, w)
+    probability = sigmoid(xtw)
+    return np.transpose(Hessian(x, probability)) @ v
+
+
+def ex4c():
+    n = 20
+    x = np.random.rand(n, 1)
+    w = np.random.rand(n, 1)
+    y = np.array([[0]])
+    Objective_history1 = Gradient_Descent(x, y, w)
+    Objective_history2 = Exact_Newton(x, y, w)
+    iterations = np.arange(0, 100, 1)
+
+    plt.figure()
+    plt.plot(iterations, Objective_history1, label="GD")
+    plt.plot(iterations, Objective_history2, label="EN")
+    plt.legend()
+    plt.title("Gradient And Newton Tests")
+    plt.show()
+
+
+def Gradient_Descent(x, y, w, alpha=0.01, iterations=100):
+    Objective_history = np.zeros(iterations)
+    for i in range(iterations):
+        probability = sigmoid(net_input(x, w))
+        w = w - alpha * Gradient(x, y, probability)
+        Objective_history[i] = Objective(x, y, 1-y, probability)
+
+    return Objective_history
+
+
+def Exact_Newton(x, y, w, alpha=1.0, iterations=100):
+    Objective_history = np.zeros(iterations)
+    for i in range(iterations):
+        xtw = net_input(x, w)
+        probability = sigmoid(xtw)
+        Regulated_Hessian = Hessian(x, probability) + np.eye(x.shape[0])
+        w = w - alpha * np.linalg.inv(Regulated_Hessian) @ Gradient(x, y, probability)
+        Objective_history[i] = Objective(x, y, 1-y, probability)
+
+    return Objective_history
+
+
+def Armijo_Linesearch(x, y, w, alpha=1.0, beta=0.5, c=0.5):
+    xtw = net_input(x, w)
+    probability = sigmoid(xtw)
+    Objective_fx = Objective(x, y, 1-y, probability)
+    Gradient_fx = Gradient(x, y, probability)
+    d = -np.linalg.inv(Hessian(x, probability)) @ Gradient(x, y, probability)
+    for i in range(10):
+        Objective_fx_ad = Objective(x + alpha * d, y, 1 - y, probability)
+        if (Objective_fx_ad <= Objective_fx - c * alpha * (Gradient_fx.transpose() @ d)):
+            return alpha
+        else:
+            alpha = beta * alpha
+    return alpha
 
 
 if __name__ == '__main__':
@@ -257,11 +284,6 @@ if __name__ == '__main__':
     w = np.array([[0.5, 0.5]])
     y = np.array([[1],
                   [0]])
-    #ex4a(x, y)
-    #x = np.array([[1],
-    #              [2],
-    #              [1]])
-    y = np.array([[1, 0]]).transpose()
-    d = np.random.rand(x.shape[0], 1)
-    #ex4b(x, y, w)
-    ex4b()
+    # ex4a(x, y)
+    #ex4b()
+    ex4c()
