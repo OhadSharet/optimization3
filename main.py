@@ -173,15 +173,17 @@ def ex4b():
 def verification_test(x, y, w):
     d = np.random.rand(x.shape[0], 1)
     epsilon = 0.1
+    n = 11
     F0 = function(x, y, w)
     G0 = grand(x, y, w)
-    iterations = np.arange(0, 10, 1)
-    y0 = np.zeros(10)
-    y1 = np.zeros(10)
-    y2 = np.zeros(10)
-    y3 = np.zeros(10)
-    for k in range(10):
-        epsilon_k = epsilon * pow(0.5, k)
+    iterations = np.arange(0, n, 1)
+    y0 = np.zeros(n)
+    y1 = np.zeros(n)
+    y2 = np.zeros(n)
+    y3 = np.zeros(n)
+    for k in range(n):
+        epsilon_k = epsilon * k
+        print(epsilon_k)
         ed = epsilon_k * d
         x_ed = x + ed
         Fk = function(x_ed, y, w)
@@ -242,9 +244,14 @@ def ex4c():
 def Gradient_Descent(x, y, w, alpha=0.01, iterations=100):
     Objective_history = np.zeros(iterations)
     for i in range(iterations):
-        probability = sigmoid(net_input(x, w))
-        w = w - alpha * Gradient(x, y, probability)
-        Objective_history[i] = Objective(x, y, 1-y, probability)
+        xtw = net_input(x, w)
+        probability = sigmoid(xtw)
+        f_k = Objective(x, y, 1-y, probability)
+        g_k = Gradient(x, y, probability)
+        d = np.array(-g_k)
+        alpha = Armijo_Linesearch(x, y, w, d, g_k, alpha=alpha)
+        w = np.clip(w + (alpha * d), -1, 1)
+        Objective_history[i] = f_k
 
     return Objective_history
 
@@ -252,24 +259,23 @@ def Gradient_Descent(x, y, w, alpha=0.01, iterations=100):
 def Exact_Newton(x, y, w, alpha=1.0, iterations=100):
     Objective_history = np.zeros(iterations)
     for i in range(iterations):
-        xtw = net_input(x, w)
-        probability = sigmoid(xtw)
-        Regulated_Hessian = Hessian(x, probability) + np.eye(x.shape[0])
-        w = w - alpha * np.linalg.inv(Regulated_Hessian) @ Gradient(x, y, probability)
-        Objective_history[i] = Objective(x, y, 1-y, probability)
+        f_k, g_k, h_k = Logistic_Regression(x, y, w)
+        h_k_regulated = h_k + np.eye(x.shape[0])
+        d = -np.linalg.inv(h_k_regulated) @ g_k
+        alpha = Armijo_Linesearch(x, y, w, d, g_k, alpha=alpha)
+        w = np.clip(w + (alpha * d), -1, 1)
+        Objective_history[i] = f_k
 
     return Objective_history
 
 
-def Armijo_Linesearch(x, y, w, alpha=1.0, beta=0.5, c=0.5):
+def Armijo_Linesearch(x, y, w, d, g_k, alpha=1.0, beta=0.5, c=1e-4):
     xtw = net_input(x, w)
     probability = sigmoid(xtw)
-    Objective_fx = Objective(x, y, 1-y, probability)
-    Gradient_fx = Gradient(x, y, probability)
-    d = -np.linalg.inv(Hessian(x, probability)) @ Gradient(x, y, probability)
+    f_k = Objective(x, y, 1-y, probability)
     for i in range(10):
-        Objective_fx_ad = Objective(x + alpha * d, y, 1 - y, probability)
-        if (Objective_fx_ad <= Objective_fx - c * alpha * (Gradient_fx.transpose() @ d)):
+        f_k_1 = Objective(x + (alpha * d), y, 1 - y, probability)
+        if f_k_1 <= f_k - (alpha * c * np.dot(d.transpose(), g_k)):
             return alpha
         else:
             alpha = beta * alpha
