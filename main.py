@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.sparse import spdiags
 import matplotlib.pyplot as plt
+import math
 
 
 def ex2():
@@ -276,14 +277,46 @@ def Armijo_Linesearch(x, y, w, alpha=1.0, beta=0.5, c=0.5):
     return alpha
 
 
-if __name__ == '__main__':
-    x = np.array([[2, 1],
-                  [2, 1],
-                  [1, 1]])
 
-    w = np.array([[0.5, 0.5]])
-    y = np.array([[1],
-                  [0]])
-    # ex4a(x, y)
-    #ex4b()
-    ex4c()
+def ex3f():
+    theta = [1000000,0.001,110]
+    ans = f(theta)
+    y = usa_data_to_vector()
+    print(ans)
+    for i in range(1,3):
+        jacobi = calc_f_jacobi(theta)
+        F_grad = jacobi.transpose()@(f(theta)-y)
+        theta -= F_grad*0.000000000000001
+    print("---------------------------------------------------------")
+    print (f(theta))
+
+def f(theta):
+    return np.array([fi(theta,xi) for xi in range(1,100)])
+
+def fi(theta,xi):
+    return theta[0]*math.exp(-theta[1]*((xi-theta[2])**2))
+
+def calc_f_jacobi(theta):
+    return np.array([_fi_gradient(theta, xi) for xi in range(1,100)])
+
+def _fi_gradient(theta,xi):
+    t = (xi - theta[2]) ** 2
+    g1 = math.exp(-theta[1]*t)
+    g2 = -theta[0]*t*math.exp(-theta[1]*t)
+    g3 = 2*theta[0]*theta[1]*t*math.exp(-theta[1]*t**2)
+    return [g1,g2,g3]
+
+
+
+
+def usa_data_to_vector():
+    with open("Covid-19-USA.txt") as file_in:
+        lines = []
+        for line in file_in:
+            lines.append(int(line))
+    return np.array(lines)
+
+
+
+if __name__ == '__main__':
+    ex3f()
