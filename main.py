@@ -143,32 +143,6 @@ def ex4b():
     y = np.array([[0]])
     verification_test(x, y, w)
 
-    # list_of_epsilons = np.arange(0.0, 0.6, 0.1)
-    # d = np.random.rand(x.shape[0], 1)
-    # gradient_test_results = []
-    # jacobi_test_results = []
-    # for i in list_of_epsilons:
-    #    epsilon = i
-    #    Xtw = net_input(X, w)
-    #    probability = sigmoid(Xtw)
-    #    X_ed = (X + (epsilon * d))
-    #    X_edtw = net_input(X_ed, w)
-    #    probability_new = sigmoid(X_edtw)
-    #    Fx_ed = Objective(X_ed, y, 1 - y, probability_new)
-    #    Fx = Objective(X, y, 1 - y, probability)
-    #    Fx_Gradient = Gradient(X, y, probability)
-    #    Fx_Gradient_ed = Gradient(X_ed, y, probability_new)
-    #    Fx_Hessian = Hessian(X, probability)
-    #    print("4b")
-    #    # print(d)
-    #    print(Fx_ed - Fx)
-    #    print(np.abs(Fx_ed - Fx - ((epsilon * d.transpose()) @ Fx_Gradient)))
-    #    print(np.linalg.norm(Fx_Gradient_ed - Fx_Gradient))
-    #    print(np.linalg.norm(Fx_Gradient_ed - Fx_Gradient - (epsilon * (Fx_Hessian @ d))))
-
-    # gradient_test_results.append(np.abs(Fx_ed - Fx - ((epsilon * d.transpose()) @ Fx_Gradient))[0][0])
-    # jacobi_test_results.append(np.abs(Fx_ed - Fx - (epsilon * epsilon * (d.transpose() @ Fx_Hessian @ d)))[0][0])
-
 
 def verification_test(x, y, w):
     d = np.random.rand(x.shape[0], 1)
@@ -224,6 +198,32 @@ def JacMV(x, w, v):
     return np.transpose(Hessian(x, probability)) @ v
 
 
+# function is running from MNIST
+def ex4c_test(x1, y1, x2, y2):
+    w1 = np.zeros((x1.shape[0], 1))
+    w2 = np.zeros((x2.shape[0], 1))
+    y2 = y2
+    Objective_history1 = Gradient_Descent(x1, y1, w1)
+    Objective_history2 = Exact_Newton(x1, y1, w1)
+    Objective_history3 = Gradient_Descent(x2, y2, w2)
+    Objective_history4 = Exact_Newton(x2, y2, w2)
+    iterations = np.arange(0, 100, 1)
+
+    plt.figure()
+    plt.plot(iterations, Objective_history1, label="Train")
+    plt.plot(iterations, Objective_history3, label="Test")
+    plt.legend()
+    plt.title("Gradient_Descent")
+    plt.show()
+
+    plt.figure()
+    plt.plot(iterations, Objective_history2, label="Train")
+    plt.plot(iterations, Objective_history4, label="Test")
+    plt.legend()
+    plt.title("Exact_Newton")
+    plt.show()
+
+
 def ex4c():
     n = 20
     x = np.random.rand(n, 1)
@@ -241,8 +241,12 @@ def ex4c():
     plt.show()
 
 
-def Gradient_Descent(x, y, w, alpha=0.01, iterations=100):
+def Gradient_Descent(x, y, w, alpha=1.0, iterations=100):
     Objective_history = np.zeros(iterations)
+    xtw = net_input(x, w)
+    probability = sigmoid(xtw)
+    f0 = Objective(x, y, 1-y, probability)
+
     for i in range(iterations):
         xtw = net_input(x, w)
         probability = sigmoid(xtw)
@@ -251,20 +255,24 @@ def Gradient_Descent(x, y, w, alpha=0.01, iterations=100):
         d = np.array(-g_k)
         alpha = Armijo_Linesearch(x, y, w, d, g_k, alpha=alpha)
         w = np.clip(w + (alpha * d), -1, 1)
-        Objective_history[i] = f_k
+        Objective_history[i] = f_k - f0
 
     return Objective_history
 
 
 def Exact_Newton(x, y, w, alpha=1.0, iterations=100):
     Objective_history = np.zeros(iterations)
+    xtw = net_input(x, w)
+    probability = sigmoid(xtw)
+    f0 = Objective(x, y, 1 - y, probability)
+
     for i in range(iterations):
         f_k, g_k, h_k = Logistic_Regression(x, y, w)
         h_k_regulated = h_k + np.eye(x.shape[0])
         d = -np.linalg.inv(h_k_regulated) @ g_k
         alpha = Armijo_Linesearch(x, y, w, d, g_k, alpha=alpha)
         w = np.clip(w + (alpha * d), -1, 1)
-        Objective_history[i] = f_k
+        Objective_history[i] = f_k - f0
 
     return Objective_history
 
@@ -286,10 +294,9 @@ if __name__ == '__main__':
     x = np.array([[2, 1],
                   [2, 1],
                   [1, 1]])
-
-    w = np.array([[0.5, 0.5]])
     y = np.array([[1],
                   [0]])
+    w = np.array([[0.5, 0.5]])
     # ex4a(x, y)
     #ex4b()
     ex4c()
