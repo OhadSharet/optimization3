@@ -64,7 +64,7 @@ class MnistDataloader(object):
         return images, labels
 
     def splitter(self, images, labels, size):
-        print(self.test_or_train)
+        #print(self.test_or_train)
         zeros_ones_counter = 0
         eights_nines_counter = 0
         index_1 = 0
@@ -95,8 +95,8 @@ class MnistDataloader(object):
                     image_i = np.array(images[i][:]).flatten()
                     self.train_images_matrix_8_9[index_2] = image_i
                     index_2 = index_2 + 1
-            self.train_images_matrix_0_1 = self.train_images_matrix_0_1.transpose()
-            self.train_images_matrix_8_9 = self.train_images_matrix_8_9.transpose()
+            self.train_images_matrix_0_1 = self.train_images_matrix_0_1.transpose() /255
+            self.train_images_matrix_8_9 = self.train_images_matrix_8_9.transpose() /255
             self.train_images_labels_0_1 = np.array([self.train_images_labels_0_1]).transpose()
             self.train_images_labels_8_9 = np.array([self.train_images_labels_8_9]).transpose() % 8
 
@@ -125,8 +125,8 @@ class MnistDataloader(object):
                     image_i = np.array(images[i][:]).flatten()
                     self.test_images_matrix_8_9[index_2] = image_i
                     index_2 = index_2 + 1
-            self.test_images_matrix_0_1 = self.test_images_matrix_0_1.transpose()
-            self.test_images_matrix_8_9 = self.test_images_matrix_8_9.transpose()
+            self.test_images_matrix_0_1 = self.test_images_matrix_0_1.transpose() / 255
+            self.test_images_matrix_8_9 = self.test_images_matrix_8_9.transpose() / 255
             self.test_images_labels_0_1 = np.array([self.test_images_labels_0_1]).transpose()
             self.test_images_labels_8_9 = np.array([self.test_images_labels_8_9]).transpose() % 8
 
@@ -210,8 +210,8 @@ def loadMNIST_main():
 
     ### testing ###
     x1, y1, x2, y2, x3, y3, x4, y4 = mnist_dataloader.splitter_return()
-    project_main.ex4c_test(x1, y1, x3, y3)
-    project_main.ex4c_test(x2, y2, x4, y4)
+    project_main.ex4c_test(x1, y1, x3, y3, 0)
+    project_main.ex4c_test(x2, y2, x4, y4, 1)
 
 
 if __name__ == "__main__":
