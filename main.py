@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.optimize as sci
 from scipy.sparse import spdiags
 import matplotlib.pyplot as plt
 import math
@@ -133,7 +134,8 @@ def gradient(w, x, y):
 def hessian(w, x, y):
     m = y.shape[0]
     probability = sigmoid(net_input(x, w))
-    D = np.asarray(probability.transpose())[0]
+    probability_multiplication = probability * (1 - probability)
+    D = np.asarray(probability_multiplication.transpose())[0]
     D = np.diag(D)
     # Hessian_Fw = X @ D @ X.transpose()
     return (1 / m) * (x @ D @ x.transpose())
@@ -143,30 +145,28 @@ def ex4b():
     n = 20
     w = np.random.rand(n, 1)
     x = np.random.rand(n, 1)
-    y = np.array([[0]])
+    y = np.array([[1]])
     verification_test(w, x, y)
 
-    # gradient_test_results.append(np.abs(Fx_ed - Fx - ((epsilon * d.transpose()) @ Fx_Gradient))[0][0])
-    # jacobi_test_results.append(np.abs(Fx_ed - Fx - (epsilon * epsilon * (d.transpose() @ Fx_Hessian @ d)))[0][0])
 
 def verification_test(w, x, y):
     d = np.random.rand(x.shape[0], 1)
     epsilon = 0.1
-    n = 11
+    n = 20
     F0 = function(w, x, y)
-    G0 = grand(w, x, y)
+    G0 = grad(w, x, y)
     iterations = np.arange(0, n, 1)
     y0 = np.zeros(n)
     y1 = np.zeros(n)
     y2 = np.zeros(n)
     y3 = np.zeros(n)
     for k in range(n):
-        epsilon_k = epsilon * k
+        epsilon_k = epsilon * pow(0.5, k)
         print(epsilon_k)
         ed = epsilon_k * d
-        x_ed = x + ed
-        Fk = function(w, x_ed, y)
-        Gk = grand(w, x_ed, y)
+        w_ed = w + ed
+        Fk = function(w_ed, x, y)
+        Gk = grad(w_ed, x, y)
         F1 = F0 + (epsilon_k * np.dot(d.transpose(), G0))
         G1 = G0 + JacMV(w, x, y, epsilon_k * d)
         y0[k] = np.abs(Fk - F0)
@@ -176,12 +176,12 @@ def verification_test(w, x, y):
         print("Err 1 " + str(y0[k]) + " Err 2 " + str(y1[k]) + " Err 3 " + str(y2[k]) + " Err 4 " + str(y3[k]))
 
     plt.figure()
-    plt.plot(iterations, y0, label="|f(x+εd)-f(x)|")
-    plt.plot(iterations, y1, label="|f(x+εd)-f(x)-εdt*grand(x)|")
-    plt.plot(iterations, y2, label="||grand(x+εd)-grand(x)||")
-    plt.plot(iterations, y3, label="||grand(x+εd)-grand(x)-JacMV(x,εd)||")
+    plt.semilogy(iterations, y0, label="|f(w+εd)-f(w)|")
+    plt.semilogy(iterations, y1, label="|f(w+εd)-f(w)-εdt*grad(w)|")
+    plt.semilogy(iterations, y2, label="||grad(w+εd)-grad(w)||")
+    plt.semilogy(iterations, y3, label="||grad(w+εd)-grad(w)-JacMV(w,εd)||")
     plt.xlabel("Iterations")
-    plt.ylabel("Decrease Factor")
+    plt.ylabel("Decrease Factors")
     plt.legend()
     plt.title("Gradient and Jacobian Tests")
     plt.show()
@@ -193,7 +193,7 @@ def function(w, x, y):
     return cost(w, x, y)
 
 
-def grand(w, x, y):
+def grad(w, x, y):
     #xtw = net_input(x, w)
     #probability = sigmoid(xtw)
     return gradient(w, x, y)
@@ -209,7 +209,6 @@ def JacMV(w, x, y, v):
 def ex4c_test(x1, y1, x2, y2, train_or_test):
     w1 = 0.01 * np.ones((x1.shape[0], 1))
     w2 = 0.01 * np.ones((x2.shape[0], 1))
-    y2 = y2
     #fitter(w1, x1, y1)
     Objective_history1 = Gradient_Descent(w1, x1, y1)
     Objective_history2 = Exact_Newton(w1, x1, y1)
@@ -222,7 +221,7 @@ def ex4c_test(x1, y1, x2, y2, train_or_test):
         plt.plot(iterations, Objective_history1, label="Train")
         plt.plot(iterations, Objective_history3, label="Test")
         plt.xlabel("Iterations")
-        plt.ylabel("|f(x+εd)-f(x)|")
+        plt.ylabel("|f(w)-f(w*)|")
         plt.legend()
         plt.title("Gradient Descent: 0 vs 1")
         plt.show()
@@ -231,7 +230,7 @@ def ex4c_test(x1, y1, x2, y2, train_or_test):
         plt.plot(iterations, Objective_history2, label="Train")
         plt.plot(iterations, Objective_history4, label="Test")
         plt.xlabel("Iterations")
-        plt.ylabel("|f(x+εd)-f(x)|")
+        plt.ylabel("|f(w)-f(w*)||")
         plt.legend()
         plt.legend()
         plt.title("Exact Newton: 0 vs 1")
@@ -242,7 +241,7 @@ def ex4c_test(x1, y1, x2, y2, train_or_test):
         plt.plot(iterations, Objective_history1, label="Train")
         plt.plot(iterations, Objective_history3, label="Test")
         plt.xlabel("Iterations")
-        plt.ylabel("|f(x+εd)-f(x)|")
+        plt.ylabel("|f(w)-f(w*)|")
         plt.legend()
         plt.legend()
         plt.title("Gradient Descent: 8 vs 9")
@@ -252,7 +251,7 @@ def ex4c_test(x1, y1, x2, y2, train_or_test):
         plt.plot(iterations, Objective_history2, label="Train")
         plt.plot(iterations, Objective_history4, label="Test")
         plt.xlabel("Iterations")
-        plt.ylabel("|f(x+εd)-f(x)|")
+        plt.ylabel("|f(w)-f(w*)|")
         plt.legend()
         plt.legend()
         plt.title("Exact Newton: 8 vs 9")
@@ -279,7 +278,7 @@ def ex4c():
 
 
 def fitter(w, x, y):
-    weight = sci.fmin_tnc(function, x0=w, fprime=grand, args=(x, y))
+    weight = sci.fmin_tnc(function, x0=w, fprime=grad, args=(x, y))
     print(weight[0])
 
 
@@ -293,7 +292,7 @@ def Gradient_Descent(w, x, y, alpha0=0.25, iterations=100):
         d = np.array(-g_k)
         alpha = Armijo_Linesearch(w, x, y, d, g_k, alpha=alpha0)
         w = np.clip(w + (alpha * d), -1, 1)
-        Cost_history[i] = np.abs(f_k - f0)
+        Cost_history[i] = np.abs(f_k)
 
     return Cost_history
 
@@ -310,7 +309,7 @@ def Exact_Newton(w, x, y, alpha0=1.0, iterations=100):
         d = -np.linalg.inv(h_k_regulated) @ g_k
         alpha = Armijo_Linesearch(w, x, y, d, g_k, alpha=alpha0)
         w = np.clip(w + (alpha * d), -1, 1)
-        Cost_history[i] = np.abs(f_k - f0)
+        Cost_history[i] = np.abs(f_k)
 
     return Cost_history
 
@@ -375,6 +374,6 @@ if __name__ == '__main__':
                   [0]])
     w = np.array([[0.5, 0.5]])
     #ex4a(x, y)
-    #ex4b()
-    ex4c()
+    ex4b()
+    #ex4c()
 
