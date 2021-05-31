@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import scipy.optimize as sci
 from scipy.sparse import spdiags
@@ -119,7 +121,6 @@ def cost(w, x, y):
     c1 = y
     c2 = 1-y
     probability = sigmoid(net_input(x, w))
-    # Objective_Fw = c1.transpose() @ np.log(probability) + c2.transpose() @ np.log(1 - probability)
     return -(1 / m) * (c1.transpose() @ np.log(probability) + c2.transpose() @ np.log(1 - probability))
 
 
@@ -127,7 +128,6 @@ def gradient(w, x, y):
     m = x.shape[1]
     c1 = y
     probability = sigmoid(net_input(x, w))
-    # Gradient_Fw = X @ (probability - c1)
     return (1 / m) * (x @ (probability - c1))
 
 
@@ -137,7 +137,6 @@ def hessian(w, x, y):
     probability_multiplication = probability * (1 - probability)
     D = np.asarray(probability_multiplication.transpose())[0]
     D = np.diag(D)
-    # Hessian_Fw = X @ D @ X.transpose()
     return (1 / m) * (x @ D @ x.transpose())
 
 
@@ -145,11 +144,11 @@ def ex4b():
     n = 20
     w = np.random.rand(n, 1)
     x = np.random.rand(n, 1)
-    y = np.array([[1]])
-    verification_test(w, x, y)
+    y = np.array([[random.randint(0, 1)]])
+    Verification_Test(w, x, y)
 
 
-def verification_test(w, x, y):
+def Verification_Test(w, x, y):
     d = np.random.rand(x.shape[0], 1)
     epsilon = 0.1
     n = 20
@@ -188,27 +187,21 @@ def verification_test(w, x, y):
 
 
 def function(w, x, y):
-    #xtw = net_input(x, w)
-    #probability = sigmoid(xtw)
     return cost(w, x, y)
 
 
 def grad(w, x, y):
-    #xtw = net_input(x, w)
-    #probability = sigmoid(xtw)
     return gradient(w, x, y)
 
 
 def JacMV(w, x, y, v):
-    #xtw = net_input(x, w)
-    #probability = sigmoid(xtw)
     return np.transpose(hessian(w, x, y)) @ v
 
 
 # function is running from MNIST
 def ex4c_test(x1, y1, x2, y2, train_or_test):
-    w1 = 0.01 * np.ones((x1.shape[0], 1))
-    w2 = 0.01 * np.ones((x2.shape[0], 1))
+    w1 = np.zeros((x1.shape[0], 1))
+    w2 = np.zeros((x2.shape[0], 1))
     #fitter(w1, x1, y1)
     Objective_history1 = Gradient_Descent(w1, x1, y1)
     Objective_history2 = Exact_Newton(w1, x1, y1)
@@ -262,7 +255,7 @@ def ex4c():
     n = 20
     x = np.random.rand(n, 1)
     w = np.random.rand(n, 1)
-    y = np.array([[0]])
+    y = np.array([[1]])
     Objective_history1 = Gradient_Descent(w, x, y)
     Objective_history2 = Exact_Newton(w, x, y)
     iterations = np.arange(0, 100, 1)
@@ -271,7 +264,7 @@ def ex4c():
     plt.plot(iterations, Objective_history1, label="GD")
     plt.plot(iterations, Objective_history2, label="EN")
     plt.xlabel("Iterations")
-    plt.ylabel("|f(x+εd)-f(x)|")
+    plt.ylabel("|f(w)-f(w*)|")
     plt.legend()
     plt.title("Gradient And Newton Tests")
     plt.show()
@@ -282,9 +275,9 @@ def fitter(w, x, y):
     print(weight[0])
 
 
-def Gradient_Descent(w, x, y, alpha0=0.25, iterations=100):
+def Gradient_Descent(w, x, y, alpha0=0.01, iterations=100):
     Cost_history = np.zeros(iterations)
-    f0 = cost(w, x, y)
+    f_0 = cost(w, x, y)
 
     for i in range(iterations):
         f_k = cost(w, x, y)
@@ -292,14 +285,14 @@ def Gradient_Descent(w, x, y, alpha0=0.25, iterations=100):
         d = np.array(-g_k)
         alpha = Armijo_Linesearch(w, x, y, d, g_k, alpha=alpha0)
         w = np.clip(w + (alpha * d), -1, 1)
-        Cost_history[i] = np.abs(f_k)
+        Cost_history[i] = np.abs(f_k - f_0)
 
     return Cost_history
 
 
 def Exact_Newton(w, x, y, alpha0=1.0, iterations=100):
     Cost_history = np.zeros(iterations)
-    f0 = cost(w, x, y)
+    f_0 = cost(w, x, y)
 
     for i in range(iterations):
         f_k = cost(w, x, y)
@@ -309,7 +302,7 @@ def Exact_Newton(w, x, y, alpha0=1.0, iterations=100):
         d = -np.linalg.inv(h_k_regulated) @ g_k
         alpha = Armijo_Linesearch(w, x, y, d, g_k, alpha=alpha0)
         w = np.clip(w + (alpha * d), -1, 1)
-        Cost_history[i] = np.abs(f_k)
+        Cost_history[i] = np.abs(f_k - f_0)
 
     return Cost_history
 
@@ -374,6 +367,5 @@ if __name__ == '__main__':
                   [0]])
     w = np.array([[0.5, 0.5]])
     #ex4a(x, y)
-    ex4b()
-    #ex4c()
-
+    #ex4b()
+    ex4c()
