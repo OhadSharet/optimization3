@@ -1,7 +1,5 @@
 import random
-
 import numpy as np
-import scipy.optimize as sci
 from scipy.sparse import spdiags
 import matplotlib.pyplot as plt
 import math
@@ -96,16 +94,14 @@ def ex4a(x, y):
     return Logistic_Regression(w, x, y)
 
 
-def Logistic_Regression(w, x, y):
+def Logistic_Regression(w, x, y, hessian_indicator=True):
     Cost_Fw = cost(w, x, y)
     Gradient_Fw = gradient(w, x, y)
-    Hessian_Fw = hessian(w, x, y)
-
-    # print("4a")
-    print(Cost_Fw)
-    print(Gradient_Fw)
-    print(Hessian_Fw)
-    return Cost_Fw, Gradient_Fw, Hessian_Fw
+    if hessian_indicator:
+        Hessian_Fw = hessian(w, x, y)
+        return Cost_Fw, Gradient_Fw, Hessian_Fw
+    else:
+        return Cost_Fw, Gradient_Fw
 
 
 def net_input(x, w):
@@ -119,7 +115,7 @@ def sigmoid(x):
 def cost(w, x, y):
     m = x.shape[1]
     c1 = y
-    c2 = 1-y
+    c2 = 1 - y
     probability = sigmoid(net_input(x, w))
     return -(1 / m) * (c1.transpose() @ np.log(probability) + c2.transpose() @ np.log(1 - probability))
 
@@ -136,8 +132,7 @@ def hessian(w, x, y):
     probability = sigmoid(net_input(x, w))
     probability_multiplication = probability * (1 - probability)
     D = np.asarray(probability_multiplication.transpose())[0]
-    D = np.diag(D)
-    return (1 / m) * (x @ D @ x.transpose())
+    return (1 / m) * (np.multiply(x, D) @ x.transpose())
 
 
 def ex4b():
@@ -202,7 +197,6 @@ def JacMV(w, x, y, v):
 def ex4c_test(x1, y1, x2, y2, train_or_test):
     w1 = np.zeros((x1.shape[0], 1))
     w2 = np.zeros((x2.shape[0], 1))
-    #fitter(w1, x1, y1)
     Objective_history1 = Gradient_Descent(w1, x1, y1)
     Objective_history2 = Exact_Newton(w1, x1, y1)
     Objective_history3 = Gradient_Descent(w2, x2, y2)
@@ -270,84 +264,91 @@ def ex4c():
     plt.show()
 
 
-def fitter(w, x, y):
-    weight = sci.fmin_tnc(function, x0=w, fprime=grad, args=(x, y))
-    print(weight[0])
-
-
-def Gradient_Descent(w, x, y, alpha0=0.01, iterations=100):
-    Cost_history = np.zeros(iterations)
-    f_0 = cost(w, x, y)
-
+def Gradient_Descent(w, x_train, y_train, x_test, y_test, alpha=1.0, iterations=100):
+    train_cost_history = []
+    test_cost_history = []
+    d = np.zeros(w.shape)
+    g_k = np.zeros(w.shape)
+    f_k = 1
     for i in range(iterations):
-        f_k = cost(w, x, y)
-        g_k = gradient(w, x, y)
-        d = np.array(-g_k)
-        alpha = Armijo_Linesearch(w, x, y, d, g_k, alpha=alpha0)
-        w = np.clip(w + (alpha * d), -1, 1)
-        Cost_history[i] = np.abs(f_k - f_0)
+        w = np.clip(w, -1, 1)
+        if i != 0:
+            alpha = Armijo_Linesearch(w, x_train, y_train, d, g_k)
+        w += alpha * d
+        if f_k < 0.001:
+            break
+        f_k, g_k = Logistic_Regression(w, x_train, y_train, hessian_indicator=False)
+        d = -np.array(g_k)
+        f_0 = cost(w, x_test, y_test)
+        train_cost_history.append(f_k[0][0])
+        test_cost_history.append(f_0[0][0])
+    return w, np.array(train_cost_history), np.array(test_cost_history)
 
-    return Cost_history
 
-
-def Exact_Newton(w, x, y, alpha0=1.0, iterations=100):
-    Cost_history = np.zeros(iterations)
-    f_0 = cost(w, x, y)
-
+def Exact_Newton(w, x_train, y_train, x_test, y_test, alpha=1.0, iterations=100):
+    train_cost_history = []
+    test_cost_history = []
+    d = np.zeros(w.shape)
+    g_k = np.zeros(w.shape)
+    f_k = 1
     for i in range(iterations):
-        f_k = cost(w, x, y)
-        g_k = gradient(w, x, y)
-        h_k = hessian(w, x, y)
-        h_k_regulated = h_k + (0.5 * np.eye(x.shape[0]))
+        w = np.clip(w, -1, 1)
+        if i != 0:
+            alpha = Armijo_Linesearch(w, x_train, y_train, d, g_k)
+        w += alpha * d
+        if f_k < 0.001:
+            break
+        f_k, g_k, h_k = Logistic_Regression(w, x_train, y_train)
+        h_k_regulated = h_k + (np.identity(h_k.shape[0]) * 0.01)
         d = -np.linalg.inv(h_k_regulated) @ g_k
-        alpha = Armijo_Linesearch(w, x, y, d, g_k, alpha=alpha0)
-        w = np.clip(w + (alpha * d), -1, 1)
-        Cost_history[i] = np.abs(f_k - f_0)
+        f_0 = cost(w, x_test, y_test)
+        train_cost_history.append(f_k[0][0])
+        test_cost_history.append(f_0[0][0])
+    return w, np.array(train_cost_history), np.array(test_cost_history)
 
-    return Cost_history
 
-
-def Armijo_Linesearch(w, x, y, d, g_k, alpha=1.0, beta=0.5, c=1e-4):
+def Armijo_Linesearch(w, x, y, d, g_k, alpha=1.0, beta=0.8, c=1e-5):
     f_k = cost(w, x, y)
     for i in range(10):
-        f_k_1 = cost(w, x + (alpha * d), y)
-        if f_k_1 <= f_k - (alpha * c * np.dot(d.transpose(), g_k)):
+        f_k_1 = cost(w + (alpha * d), x, y)
+        if f_k_1 <= f_k + (alpha * c * np.dot(d.transpose(), g_k)):
             return alpha
         else:
             alpha = beta * alpha
     return alpha
 
 
-
 def ex3f():
-    theta = [1000000,0.001,110]
+    theta = [1000000, 0.001, 110]
     ans = f(theta)
     y = usa_data_to_vector()
     print(ans)
-    for i in range(1,3):
+    for i in range(1, 3):
         jacobi = calc_f_jacobi(theta)
-        F_grad = jacobi.transpose()@(f(theta)-y)
-        theta -= F_grad*0.000000000000001
+        F_grad = jacobi.transpose() @ (f(theta) - y)
+        theta -= F_grad * 0.000000000000001
     print("---------------------------------------------------------")
-    print (f(theta))
+    print(f(theta))
+
 
 def f(theta):
-    return np.array([fi(theta,xi) for xi in range(1,100)])
+    return np.array([fi(theta, xi) for xi in range(1, 100)])
 
-def fi(theta,xi):
-    return theta[0]*math.exp(-theta[1]*((xi-theta[2])**2))
+
+def fi(theta, xi):
+    return theta[0] * math.exp(-theta[1] * ((xi - theta[2]) ** 2))
+
 
 def calc_f_jacobi(theta):
-    return np.array([_fi_gradient(theta, xi) for xi in range(1,100)])
+    return np.array([_fi_gradient(theta, xi) for xi in range(1, 100)])
 
-def _fi_gradient(theta,xi):
+
+def _fi_gradient(theta, xi):
     t = (xi - theta[2]) ** 2
-    g1 = math.exp(-theta[1]*t)
-    g2 = -theta[0]*t*math.exp(-theta[1]*t)
-    g3 = 2*theta[0]*theta[1]*t*math.exp(-theta[1]*t**2)
-    return [g1,g2,g3]
-
-
+    g1 = math.exp(-theta[1] * t)
+    g2 = -theta[0] * t * math.exp(-theta[1] * t)
+    g3 = 2 * theta[0] * theta[1] * t * math.exp(-theta[1] * t ** 2)
+    return [g1, g2, g3]
 
 
 def usa_data_to_vector():
@@ -358,7 +359,6 @@ def usa_data_to_vector():
     return np.array(lines)
 
 
-
 if __name__ == '__main__':
     x = np.array([[2, 1],
                   [2, 1],
@@ -366,6 +366,6 @@ if __name__ == '__main__':
     y = np.array([[1],
                   [0]])
     w = np.array([[0.5, 0.5]])
-    #ex4a(x, y)
-    #ex4b()
-    ex4c()
+    # ex4a(x, y)
+    ex4b()
+    # ex4c()

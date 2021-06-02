@@ -9,20 +9,14 @@ import matplotlib.pyplot as plt
 import main as myMain
 
 
-def get_objective(x, c, w, sigmxtw='None'):
-    if (sigmxtw == 'None'):
-        sigmxtw = myMain.sigmoid(myMain.net_input(x, w))
-    return -(c.transpose() @ np.log(sigmxtw) + (1 - c.transpose()) @ np.log(1 - sigmxtw)) / x.shape[0]
-
-
-def compute_logit(x, y, w, compute_hessian=True):
-    objective = myMain.cost(w, x, y)
-    deriv = myMain.gradient(w, x, y)
-    if (compute_hessian):
-        hessian = myMain.hessian(w, x, y)
-        return (objective, deriv, hessian)
-    else:
-        return (objective, deriv)  # +end_src
+#def compute_logit(x, y, w, compute_hessian=True):
+#    objective = myMain.cost(w, x, y)
+#    deriv = myMain.gradient(w, x, y)
+#    if (compute_hessian):
+#        hessian = myMain.hessian(w, x, y)
+#        return (objective, deriv, hessian)
+#    else:
+#        return (objective, deriv)  # +end_src
 
     # +name test 4a
 
@@ -35,7 +29,7 @@ x = np.array([[1, 2],
 x = x.transpose()
 y = np.array([[0, 0, 1, 0, 1]]).transpose()
 w = np.array([[1, 2]]).transpose()
-objective, deriv, hessian = compute_logit(x, y, w)
+objective, deriv, hessian = myMain.Logistic_Regression(w, x, y)
 print(hessian)
 
 cwd = os.getcwd()
@@ -56,12 +50,12 @@ def filter_data_for_digits(digita, digitb):
     ti1, ti2 = tee(train_indeces)
     xtr = np.array([xtrain[i] for i in ti1]).transpose()
     ytr = np.array([ytrain[i] for i in ti2])
-    y_train = np.array([ytr]).transpose()
+    y_train = np.array([ytr]).transpose() % 8
     test_indeces = (i for i in range(xtest.shape[0]) if ytest[i] in [digita, digitb])
     ti1, ti2 = tee(test_indeces)
     xte = np.array([xtest[i] for i in ti1]).transpose()
     yte = np.array([ytest[i] for i in ti2])
-    y_test = np.array([yte]).transpose()
+    y_test = np.array([yte]).transpose() % 8
     return (xtr, y_train, xte, y_test)
 
 
@@ -79,11 +73,11 @@ def get_alpha_armijo(x, y, w, d, deriv):
     # Function performs line sarch according to armijo, retrns alpha
     pow = 0
     alpha = 0.8
-    baseobj = get_objective(x, y, w)
+    baseobj = myMain.cost(w, x, y)
 
     while (True):
         newalpha = math.pow(alpha, pow)
-        leftop = get_objective(x, y, w + newalpha * d)
+        leftop = myMain.cost(w + newalpha * d, x, y)
         rightop = baseobj + 0.00001 * newalpha * (d.transpose() @ deriv)
 
         if leftop < rightop:
@@ -92,9 +86,8 @@ def get_alpha_armijo(x, y, w, d, deriv):
             pow += 1
 
 
-def train(digita, digitb, xtrain, xtest, ytrain, ytest, sd=True):
+def train(xtrain, xtest, ytrain, ytest, sd=True):
     w = np.zeros((xtrain.shape[0], 1))
-    oldobj = 0
     trainobjs = []
     testobjs = []
     iter = 0
@@ -110,7 +103,8 @@ def train(digita, digitb, xtrain, xtest, ytrain, ytest, sd=True):
         # On first time, don't run armijo
         if (not init):
             # Running armijo
-            alpha = get_alpha_armijo(xtrain, ytrain, w, d, deriv)
+            #alpha = get_alpha_armijo(xtrain, ytrain, w, d, deriv)
+            alpha = myMain.Armijo_Linesearch(w, xtrain, ytrain, d, deriv)
         else:
             alpha = 1
             init = False
@@ -120,16 +114,15 @@ def train(digita, digitb, xtrain, xtest, ytrain, ytest, sd=True):
         if (obj < 0.001):
             flag = False
 
-        oldobj = obj
         iter += 1
 
         if (sd):
-            obj, deriv = compute_logit(xtrain, ytrain, w, False)
+            obj, deriv = myMain.Logistic_Regression(w, xtrain, ytrain, hessian_indicator=False)
             # Steepest descent
             d = -deriv
 
         else:
-            obj, deriv, hes = compute_logit(xtrain, ytrain, w)
+            obj, deriv, hes = myMain.Logistic_Regression(w, xtrain, ytrain)
             # Calculating according to newton
             d = -np.linalg.inv(hes + np.identity(hes.shape[0]) * 0.01) @ deriv
 
@@ -141,8 +134,12 @@ def train(digita, digitb, xtrain, xtest, ytrain, ytest, sd=True):
 
 def train_digits(digita, digitb, sd=True):
     xtr, ytr, xte, yte = filter_data_for_digits(digita, digitb)
-    w, trainhistory, testhistory = train(digita, digitb, xtr, xte, 1-ytr, 1-yte, sd)
-    print(trainhistory)
+    w = np.zeros((xtr.shape[0], 1))
+    if sd:
+        w, trainhistory, testhistory = myMain.Gradient_Descent(w, xtr, 1-ytr, xte, 1-yte)
+    else:
+        w, trainhistory, testhistory = myMain.Exact_Newton(w, xtr, 1-ytr, xte, 1-yte)
+    #w, trainhistory, testhistory = train(xtr, xte, 1-ytr, 1-yte, sd)
     cfrac = correct_frac(digita, digitb, xte, yte, w)
     return (np.abs(trainhistory - trainhistory[-1]), np.abs(testhistory - testhistory[-1]), cfrac, testhistory[-1], w)
 
@@ -156,27 +153,44 @@ def main():
     print("PASS")
     nw89 = train_digits(8, 9, sd=False)
     print("PASS")
-    fig, axs = plt.subplots(2, figsize=(9, 8))
-    axs[0].plot(sd01[0], color='blue')
-    axs[0].plot(nw01[0], color='red')
-    axs[0].plot(sd89[0], color='green')
-    axs[0].plot(nw89[0], color='black')
-    axs[0].set_yscale('log')
-    axs[0].set_ylabel('|f(w^k) - f(w*)|')
-    axs[0].set_xlabel('Iterations')
-    axs[1].plot(sd01[1], color='blue', label='0/1, SD')
-    axs[1].plot(nw01[1], color='red', label='0/1, Newton')
-    axs[1].plot(sd89[1], color='green', label='8/9, SD')
-    axs[1].plot(nw89[1], color='black', label='8/9, Newton')
-    axs[1].set_yscale('log')
-    axs[1].set_ylabel('|f(w^k) - f(w*)|')
-    axs[1].set_xlabel('Iterations')
-    axs[0].set_title('Training data')
-    axs[1].set_title('Test data')
-    handles, labels = axs[1].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper right')
-    fig.tight_layout(pad=5)
-    fig.savefig('asscd.png')
+    fig1, axs1 = plt.subplots(2, figsize=(9, 8))
+    axs1[0].plot(sd01[0], color='red')
+    axs1[0].plot(sd01[1], color='blue', label='0/1, SD')
+    axs1[1].plot(nw01[0], color='red')
+    axs1[1].plot(nw01[1], color='blue', label='0/1, Newton')
+    fig2, axs2 = plt.subplots(2, figsize=(9, 8))
+    axs2[0].plot(sd89[0], color='red')
+    axs2[0].plot(sd89[1], color='blue', label='8/9, SD')
+    axs2[1].plot(nw89[0], color='red')
+    axs2[1].plot(nw89[1], color='blue', label='8/9, Newton')
+    axs1[0].set_yscale('log')
+    axs1[0].set_ylabel('|f(w^k) - f(w*)|')
+    axs1[0].set_xlabel('Iterations')
+    axs1[1].set_yscale('log')
+    axs1[1].set_ylabel('|f(w^k) - f(w*)|')
+    axs1[1].set_xlabel('Iterations')
+    axs2[0].set_yscale('log')
+    axs2[0].set_ylabel('|f(w^k) - f(w*)|')
+    axs2[0].set_xlabel('Iterations')
+    axs2[1].set_yscale('log')
+    axs2[1].set_ylabel('|f(w^k) - f(w*)|')
+    axs2[1].set_xlabel('Iterations')
+
+    #axs[0].set_title('Training data')
+    #axs[1].set_title('Test data')
+
+
+    handles, labels = axs1[1].get_legend_handles_labels()
+    fig1.legend(handles, labels, loc='upper right')
+    fig1.tight_layout(pad=5)
+    fig1.savefig('asscd1.png')
+
+    handles, labels = axs2[1].get_legend_handles_labels()
+    fig2.legend(handles, labels, loc='upper right')
+    fig2.tight_layout(pad=5)
+    fig2.savefig('asscd2.png')
+
+
     print('_Fraction of classifications made correctly on test data_\n')
     print('0/1, SD: ' + str(sd01[2]) + '\n')
     print('0/1, Newton: ' + str(nw01[2]) + '\n')
