@@ -22,16 +22,6 @@ class MnistDataloader(object):
         self.test_images_filepath = test_images_filepath
         self.test_labels_filepath = test_labels_filepath
 
-        self.test_or_train = 0
-        self.train_images_labels_0_1 = 0
-        self.train_images_labels_8_9 = 0
-        self.train_images_matrix_0_1 = 0
-        self.train_images_matrix_8_9 = 0
-        self.test_images_labels_0_1 = 0
-        self.test_images_labels_8_9 = 0
-        self.test_images_matrix_0_1 = 0
-        self.test_images_matrix_8_9 = 0
-
 
     def read_images_labels(self, images_filepath, labels_filepath):
         labels = []
@@ -53,105 +43,19 @@ class MnistDataloader(object):
         for i in range(size):
             img = np.array(image_data[i * rows * cols:(i + 1) * rows * cols])
             img = img.reshape(28, 28)
-            #meanval = np.mean(img)
-            #stdval = np.std(img)
-            #img = (img - meanval) / (stdval + 0.1)
+            meanval = np.mean(img)
+            stdval = np.std(img)
+            img = (img - meanval) / (stdval + 0.1)
             images[i][:] = img
-        #print(np.array(images[1][:]))
-        #print(np.array([labels]).transpose())
 
-        self.splitter(images, labels, size)
         return images, labels
-
-    def splitter(self, images, labels, size):
-        #print(self.test_or_train)
-        zeros_ones_counter = 0
-        eights_nines_counter = 0
-        index_1 = 0
-        index_2 = 0
-        if self.test_or_train == 0:
-            self.test_or_train = 1
-            for i in range(size):
-                if labels[i] == 0 or labels[i] == 1:
-                    zeros_ones_counter = zeros_ones_counter + 1
-                if labels[i] == 8 or labels[i] == 9:
-                    eights_nines_counter = eights_nines_counter + 1
-            print(zeros_ones_counter)
-            print(eights_nines_counter)
-            self.train_images_labels_0_1 = []
-            self.train_images_labels_8_9 = []
-            self.train_images_matrix_0_1 = np.zeros((zeros_ones_counter, 28 * 28))
-            self.train_images_matrix_8_9 = np.zeros((eights_nines_counter, 28 * 28))
-
-            for i in range(size):
-                if labels[i] == 0 or labels[i] == 1:
-                    self.train_images_labels_0_1.append(labels[i])
-                    image_i = np.array(images[i][:]).flatten()
-                    self.train_images_matrix_0_1[index_1] = image_i
-                    index_1 = index_1 + 1
-
-                if labels[i] == 8 or labels[i] == 9:
-                    self.train_images_labels_8_9.append(labels[i])
-                    image_i = np.array(images[i][:]).flatten()
-                    self.train_images_matrix_8_9[index_2] = image_i
-                    index_2 = index_2 + 1
-            self.train_images_matrix_0_1 = self.train_images_matrix_0_1.transpose() /255
-            self.train_images_matrix_8_9 = self.train_images_matrix_8_9.transpose() /255
-            self.train_images_labels_0_1 = np.array([self.train_images_labels_0_1]).transpose()
-            self.train_images_labels_8_9 = np.array([self.train_images_labels_8_9]).transpose() % 8
-
-        else:
-            for i in range(size):
-                if labels[i] == 0 or labels[i] == 1:
-                    zeros_ones_counter = zeros_ones_counter + 1
-                if labels[i] == 8 or labels[i] == 9:
-                    eights_nines_counter = eights_nines_counter + 1
-            print(zeros_ones_counter)
-            print(eights_nines_counter)
-            self.test_images_labels_0_1 = []
-            self.test_images_labels_8_9 = []
-            self.test_images_matrix_0_1 = np.zeros((zeros_ones_counter, 28 * 28))
-            self.test_images_matrix_8_9 = np.zeros((eights_nines_counter, 28 * 28))
-
-            for i in range(size):
-                if labels[i] == 0 or labels[i] == 1:
-                    self.test_images_labels_0_1.append(labels[i])
-                    image_i = np.array(images[i][:]).flatten()
-                    self.test_images_matrix_0_1[index_1] = image_i
-                    index_1 = index_1 + 1
-
-                if labels[i] == 8 or labels[i] == 9:
-                    self.test_images_labels_8_9.append(labels[i])
-                    image_i = np.array(images[i][:]).flatten()
-                    self.test_images_matrix_8_9[index_2] = image_i
-                    index_2 = index_2 + 1
-            self.test_images_matrix_0_1 = self.test_images_matrix_0_1.transpose() / 255
-            self.test_images_matrix_8_9 = self.test_images_matrix_8_9.transpose() / 255
-            self.test_images_labels_0_1 = np.array([self.test_images_labels_0_1]).transpose()
-            self.test_images_labels_8_9 = np.array([self.test_images_labels_8_9]).transpose() % 8
-
-            # images_matrix = np.zeros((size, 28*28))
-            # for i in range(size):
-            #    image_i = np.array(images[i][:]).flatten()
-            #    images_matrix[i] = image_i
-
-            # return images_labels_0_1, images_labels_8_9, images_matrix_0_1, images_matrix_8_9
-
-    def splitter_return(self):
-        return self.train_images_matrix_0_1, self.train_images_labels_0_1, self.train_images_matrix_8_9, \
-               self.train_images_labels_8_9, self.test_images_matrix_0_1, self.test_images_labels_0_1, \
-               self.test_images_matrix_8_9, self.test_images_labels_8_9,
-
-
 
     def load_data(self):
         x_train, y_train = self.read_images_labels(self.training_images_filepath, self.training_labels_filepath)
         x_test, y_test = self.read_images_labels(self.test_images_filepath, self.test_labels_filepath)
         return (x_train, y_train), (x_test, y_test)
 
-    #
-
-
+#
 # Verify Reading Dataset via MnistDataloader class
 #
 #
