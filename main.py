@@ -171,7 +171,6 @@ def Verification_Test(w, x, y):
         y1[k] = np.abs(Fk - F1)
         y2[k] = np.linalg.norm(Gk - G0)
         y3[k] = np.linalg.norm(Gk - G1)
-        print("Err 1 " + str(y0[k]) + " Err 2 " + str(y1[k]) + " Err 3 " + str(y2[k]) + " Err 4 " + str(y3[k]))
 
     plt.figure()
     plt.semilogy(iterations, y0, label="|f(w+εd)-f(w)|")
@@ -199,13 +198,13 @@ def JacMV(w, x, y, v):
 
 def ex4c():
     gd_0v1 = fit_train_and_test(0, 1, gradient_descent_indicator=True)
-    print("PASS")
+    print("Gradient Descent 0 vs 1 - CALCULATION DONE")
     en_0v1 = fit_train_and_test(0, 1, gradient_descent_indicator=False)
-    print("PASS")
+    print("Exact Newton 0 vs 1 - CALCULATION DONE")
     gd_8v9 = fit_train_and_test(8, 9, gradient_descent_indicator=True)
-    print("PASS")
+    print("Gradient Descent 8 vs 9 - CALCULATION DONE")
     en_8v9 = fit_train_and_test(8, 9, gradient_descent_indicator=False)
-    print("PASS")
+    print("Exact Newton 8 vs 9 - CALCULATION DONE")
 
     fig1, axs1 = plt.subplots()
     fig2, axs2 = plt.subplots()
@@ -415,5 +414,5 @@ if __name__ == '__main__':
                   [0]])
     w = np.array([[0.5, 0.5]])
     # ex4a(x, y)
-    # ex4b()
+    ex4b()
     ex4c()
