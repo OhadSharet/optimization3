@@ -322,7 +322,7 @@ def Gradient_Descent(w, x_train, y_train, x_test, y_test, alpha=1.0, iterations=
         if i != 0:
             alpha = Armijo_Linesearch(w, x_train, y_train, d, g_k)
         w += alpha * d
-        if f_k < 0.001:
+        if f_k < 1e-3:
             break
         f_k, g_k = Logistic_Regression(w, x_train, y_train, hessian_indicator=False)
         d = -np.array(g_k)
@@ -343,10 +343,10 @@ def Exact_Newton(w, x_train, y_train, x_test, y_test, alpha=1.0, iterations=100)
         if i != 0:
             alpha = Armijo_Linesearch(w, x_train, y_train, d, g_k)
         w += alpha * d
-        if f_k < 0.001:
+        if f_k < 1e-3:
             break
         f_k, g_k, h_k = Logistic_Regression(w, x_train, y_train)
-        h_k_regulated = h_k + (np.identity(h_k.shape[0]) * 0.01)
+        h_k_regulated = h_k + (np.identity(h_k.shape[0]) * 1e-2)
         d = -np.linalg.inv(h_k_regulated) @ g_k
         f_0 = cost(w, x_test, y_test)
         train_cost_history.append(f_k[0][0])
@@ -414,5 +414,5 @@ if __name__ == '__main__':
                   [0]])
     w = np.array([[0.5, 0.5]])
     # ex4a(x, y)
-    ex4b()
+    # ex4b()
     ex4c()
