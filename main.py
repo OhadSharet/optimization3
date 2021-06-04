@@ -365,39 +365,38 @@ def Armijo_Linesearch(w, x, y, d, g_k, alpha=1.0, beta=0.8, c=1e-5):
     return alpha
 
 
-def ex3f():
-    sd_ans = ex3f_sd()
-    gn_ans = ex3f_gn()
-    plot_3(sd_ans,gn_ans)
-
 def ex3e():
     sd_ans = ex3e_sd()
     gn_ans = ex3e_gn()
-    plot_3(sd_ans,gn_ans)
+    plot_3(sd_ans, gn_ans, "ex3e")
 
-def plot_3(sd_ans,gn_ans):
 
-    plt.plot( sd_ans, label='SD')
+def ex3f():
+    sd_ans = ex3f_sd()
+    gn_ans = ex3f_gn()
+    plot_3(sd_ans, gn_ans, "ex3f")
+
+
+def plot_3(sd_ans, gn_ans, title):
+    plt.plot(sd_ans, label='SD')
     plt.plot(gn_ans, label='GN')
     plt.legend()
-    plt.title("3f")
-
+    plt.title(title)
     plt.show()
 
 
 def ex3e_gn():
     gn_ans = []
-    theta = [1000000,0.001,120]
-    ans = f(theta)
+    theta = [1000000, 0.001, 120]
     y = usa_data_to_vector()
     gn_iter = 10
-    for i in range(1,gn_iter):
+    for i in range(1, gn_iter):
         jacobi = calc_f_jacobi(theta)
         F_grad = jacobi.transpose()@(f(theta)-y)
         JtJ = jacobi.transpose()@jacobi
-        d_gn = np.linalg.inv(JtJ)@(-F_grad) # the direction of gauss-Newton
+        d_gn = np.linalg.inv(JtJ)@(-F_grad)  # the direction of gauss-Newton
         print(d_gn)
-        alpha = Armijo_Linesearch_ex3(theta,y,d_gn,F_grad)
+        alpha = Armijo_Linesearch_ex3(theta, y, d_gn, F_grad)
         print(alpha)
         theta += alpha*d_gn
         gn_ans.append((F(theta, y)))
@@ -405,18 +404,18 @@ def ex3e_gn():
     final_gn_ans = [int(abs(x-gn_ans[-1])) for x in gn_ans]
     return final_gn_ans
 
+
 def ex3e_sd():
     SD_ans = []
-    theta = [1000000,0.001,120] #initial theta
-    ans = f(theta)
+    theta = [1000000, 0.001, 120]  # initial theta
     y = usa_data_to_vector()
     sd_iter = 100
-    for i in range(1,sd_iter):
+    for i in range(1, sd_iter):
         jacobi = calc_f_jacobi(theta)
         F_grad = jacobi.transpose()@(f(theta)-y)
-        F_grad = F_grad/np.linalg.norm(F_grad) #gradient was to bit so we normelized it
-        d_SD = -F_grad #direction = - gradient
-        alpha = 0.00001 #step size
+        F_grad = F_grad/np.linalg.norm(F_grad)  # gradient was to bit so we normalized it
+        d_SD = -F_grad  # direction = - gradient
+        alpha = 0.00001  # step size
         theta += alpha*d_SD
         SD_ans.append((F(theta, y)))
     final_sd_ans = [int(abs(x-SD_ans[-1])) for x in SD_ans]
@@ -425,18 +424,18 @@ def ex3e_sd():
 
 def ex3f_sd():
     SD_ans = []
-    theta = [1,1,1]
+    theta = [1, 1, 1]
     y = usa_data_to_vector()
     sd_iter = 100
-    for i in range(1,sd_iter):
+    for i in range(1, sd_iter):
         jacobi = calc_f_jacobi_f(theta)
         F_grad = jacobi.transpose()@(f(theta)-y)
-        F_grad = F_grad/np.linalg.norm(F_grad)#gradient was to bit so we normelized it
+        F_grad = F_grad/np.linalg.norm(F_grad)  # gradient was to bit so we normalized it
         d_SD = -F_grad
         print(d_SD)
-        alpha = 0.0001#Armijo_Linesearch_ex3(theta,y,d_SD,F_grad)
+        alpha = 0.0001  # Armijo_Linesearch_ex3(theta, y, d_SD, F_grad)
 
-        print("theta : %s"%theta)
+        print("theta : %s" % theta)
         theta += alpha*d_SD
         SD_ans.append((F(theta, y)))
     print("---------------------------------------------------------")
@@ -444,73 +443,84 @@ def ex3f_sd():
     final_sd_ans = [int(abs(x-SD_ans[-1])) for x in SD_ans]
     return final_sd_ans
 
+
 def ex3f_gn():
     gn_ans = []
-    theta = [1,1,1]
-    ans = f(theta)
+    theta = [1, 1, 1]
     y = usa_data_to_vector()
     gn_iter = 10
-    for i in range(1,gn_iter):
+    for i in range(1, gn_iter):
         jacobi = calc_f_jacobi_f(theta)
         F_grad = jacobi.transpose()@(f(theta)-y)
         JtJ = jacobi.transpose()@jacobi
         d_gn = np.linalg.inv(JtJ)@(-F_grad)
-        alpha = Armijo_Linesearch_ex3(theta,y,d_gn,F_grad)
+        alpha = Armijo_Linesearch_ex3(theta, y, d_gn, F_grad)
         theta += alpha*d_gn
         gn_ans.append((F(theta, y)))
     print("---------------------------------------------------------")
     final_gn_ans = [int(abs(x-gn_ans[-1])) for x in gn_ans]
     return final_gn_ans
-#
+
 
 def f(theta):
-    return np.array([fi(theta,xi) for xi in range(1,100)])
+    return np.array([fi(theta, xi) for xi in range(1, 100)])
 
-def F(theta,y):
-    return 0.5*((np.linalg.norm(f(theta) - y,2))**2)
 
-def fi(theta,xi):
+def F(theta, y):
+    return 0.5*((np.linalg.norm(f(theta) - y, 2))**2)
+
+
+def fi(theta, xi):
     return theta[0]*math.exp(-theta[1]*((xi-theta[2])**2))
 
-def calc_f_jacobi(theta):
-    return np.array([_fi_gradient(theta, xi) for xi in range(1,100)])
 
-def _fi_gradient(theta,xi):
+def calc_f_jacobi(theta):
+    return np.array([_fi_gradient(theta, xi) for xi in range(1, 100)])
+
+
+def _fi_gradient(theta, xi):
+
     '''
     calc gradient for function in ex3e
     :param theta:
     :param xi: row number
-    :return: return the gradient of the i'th row
+    :return: return the gradient of the i-th row
     '''
+
     t = (xi - theta[2]) ** 2
     t3 = (xi - theta[2])
     g1 = math.exp(-theta[1]*t)
     g2 = -t*theta[0]*math.exp(-t*theta[1])
     g3 = 2*t3*theta[0]*theta[1]*math.exp(-theta[1]*t)
-    return [g1,g2,g3]
+    return [g1, g2, g3]
+
 
 def calc_f_jacobi_f(theta):
-    return np.array([_fi_gradient_f(theta, xi) for xi in range(1,100)])
+    return np.array([_fi_gradient_f(theta, xi) for xi in range(1, 100)])
 
-def _fi_gradient_f(theta,xi):
+
+def _fi_gradient_f(theta, xi):
+
     '''
     calc gradient for function in ex3ef
     :param theta:
     :param xi: row number
     :return: return the gradient of the i'th row
     '''
-    a0=1000000
+
+    a0 = 1000000
     a1 = -0.001
-    a2=110
-    t = (xi -a2*theta[2]) ** 2
-    t3 = (xi -a2*theta[2])
+    a2 = 110
+    t = (xi-a2*theta[2]) ** 2
+    t3 = (xi-a2*theta[2])
     g1 = a0*math.exp(a1*theta[1]*t)
     g2 = a1*a0*t*theta[0]*math.exp(a1*t*theta[1])
     g3 = 220000*t3*theta[0]*theta[1]*math.exp(a1*theta[1]*t)
-    return [g1,g2,g3]
+    return [g1, g2, g3]
 
-def Armijo_Linesearch_ex3(theta,y, d, g_k, alpha=1.0, beta=0.5, c=1e-4 , max_iter = 100):
-    f_k = F(theta,y)
+
+def Armijo_Linesearch_ex3(theta, y, d, g_k, alpha=1.0, beta=0.5, c=1e-4, max_iter=100):
+    f_k = F(theta, y)
     for i in range(max_iter):
         f_k_1 = F(theta + (alpha * d), y)
         if f_k_1 <= f_k + (alpha * c * np.dot(d.transpose(), g_k)):
@@ -518,7 +528,6 @@ def Armijo_Linesearch_ex3(theta,y, d, g_k, alpha=1.0, beta=0.5, c=1e-4 , max_ite
         else:
             alpha = beta * alpha
     return alpha
-
 
 
 def usa_data_to_vector():
@@ -529,7 +538,15 @@ def usa_data_to_vector():
     return np.array(lines)
 
 
-
 if __name__ == '__main__':
+    # x = np.array([[2, 1],
+    #               [2, 1],
+    #               [1, 1]])
+    # y = np.array([[1],
+    #               [0]])
+    # w = np.array([[0.5, 0.5]])
+    # ex4a(x, y)
+    # ex4b()
+    # ex4c()
     ex3e()
     ex3f()
