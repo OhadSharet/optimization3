@@ -502,10 +502,10 @@ def calc_f_jacobi_f(theta):
 def _fi_gradient_f(theta, xi):
 
     '''
-    calc gradient for function in ex3ef
+    calc gradient for function in ex3f
     :param theta:
     :param xi: row number
-    :return: return the gradient of the i'th row
+    :return: return the gradient of the i-th row
     '''
 
     a0 = 1000000
